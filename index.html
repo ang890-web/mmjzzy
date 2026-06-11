@@ -399,14 +399,13 @@ let records=[],customers=[],currentTab='list',statRange='today',_currentPhoto=nu
 
 
 
-// GitHub云端同步
-;if(j)body.sha=j.sha;await fetch('https://api.github.com/repos/ang890-web/mmjzzy/contents/data.json',{method:'PUT',headers:{'Authorization':'Bearer '+gtk,'Content-Type':'application/json'},body:JSON.stringify(body)})}catch(e){}}
+}
 return null}
 
 const DEF_CATS=['黄金','白银','珍珠','水晶','玉石','其他'];
 const DEF_SUBCATS=['戒指','手镯','项链','手串','挂件'];
 let customCats=[],customSubCats=[];
-function loadData(){var d=null;try{var r=localStorage.getItem('j');if(r)d=JSON.parse(r)}catch(e){}if(!d||!d.rec||!d.rec.length){try{if(window.name){d=JSON.parse(window.name)}}catch(e){}}records=d&&d.rec?d.rec:[];customers=d&&d.cus?d.cus:[];customCats=d&&d.cc?d.cc:[];customSubCats=d&&d.sc?d.sc:[];targets=d&&d.tg?d.tg:{};if(!Array.isArray(records))records=[];if(!Array.isArray(customers))customers=[];if(!Array.isArray(customCats))customCats=[];if(!Array.isArray(customSubCats))customSubCats=[]}catch(e){if(window._d){records=window._d.rec||[];customers=window._d.cus||[];customCats=window._d.cc||[];customSubCats=window._d.sc||[];targets=window._d.tg||{}}else{records=[];customers=[];customCats=[];customSubCats=[]}}try{if(!records||records.length===0){var r=localStorage.getItem('j_acc');records=r?JSON.parse(r):[]}}catch(e){}try{const c=localStorage.getItem('j_cust');customers=c?JSON.parse(c):[]}catch(e){}try{const x=localStorage.getItem('j_cats');customCats=x?JSON.parse(x):[]}catch(e){}try{const y=localStorage.getItem('j_subcats');customSubCats=y?JSON.parse(y):[]}catch(e){}if(!Array.isArray(records))records=[];if(!Array.isArray(customers))customers=[];if(!Array.isArray(customCats))customCats=[];if(!Array.isArray(customSubCats))customSubCats=[]}
+function loadData(){try{const r=localStorage.getItem('j_acc');records=r?JSON.parse(r):[]}catch(e){records=[]}try{const c=localStorage.getItem('j_cust');customers=c?JSON.parse(c):[]}catch(e){customers=[]}try{const x=localStorage.getItem('j_cats');customCats=x?JSON.parse(x):[]}catch(e){customCats=[]}try{const y=localStorage.getItem('j_subcats');customSubCats=y?JSON.parse(y):[]}catch(e){customSubCats=[]}if(!Array.isArray(records))records=[];if(!Array.isArray(customers))customers=[];if(!Array.isArray(customCats))customCats=[];if(!Array.isArray(customSubCats))customSubCats=[]}catch(e){if(window._d){records=window._d.rec||[];customers=window._d.cus||[];customCats=window._d.cc||[];customSubCats=window._d.sc||[];targets=window._d.tg||{}}else{records=[];customers=[];customCats=[];customSubCats=[]}}try{if(!records||records.length===0){var r=localStorage.getItem('j_acc');records=r?JSON.parse(r):[]}}catch(e){}try{const c=localStorage.getItem('j_cust');customers=c?JSON.parse(c):[]}catch(e){}try{const x=localStorage.getItem('j_cats');customCats=x?JSON.parse(x):[]}catch(e){}try{const y=localStorage.getItem('j_subcats');customSubCats=y?JSON.parse(y):[]}catch(e){}if(!Array.isArray(records))records=[];if(!Array.isArray(customers))customers=[];if(!Array.isArray(customCats))customCats=[];if(!Array.isArray(customSubCats))customSubCats=[]}
 
 function dateToStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -609,7 +608,7 @@ function renderStats(){
     (srcHtml?'<div class="card-sec"><div class="sec-title">👥 客户来源</div>'+srcHtml+'</div>':'')+
     bestHtml+
     cstHtml+debugHtml;
-}function switchTab(tab){
+function switchTab(tab){
   currentTab=tab;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.getElementById('pageList').classList.toggle('active',tab==='list');
   document.getElementById('pageCustomers').classList.toggle('active',tab==='customers');
@@ -679,7 +678,7 @@ function saveCustomer(){
   const ge=document.querySelector('#fieldGender .pill.active'),gender=ge?ge.dataset.val:'';
   const source=document.getElementById('fieldSource').value;
   if(!name){toast('请输入客户姓名');return}if(!gender){toast('请选择性别');return}
-  if(eid){const idx=customers.findIndex(c=>c.id===eid);if(idx===-1){toast('客户不存在');return}const old=customers[idx];customers[idx]={...old,name,gender,source};for(let i=0;i<records.length;i++){if(records[i].custId===eid)records[i].custName=name}}
+  if(eid){const idx=customers.findIndex(c=>c.id===eid);if(idx===-1){toast('客户不存在');returnconst old=customers[idx];customers[idx]={...old,name,gender,source};for(let i=0;i<records.length;i++){if(records[i].custId===eid)records[i].custName=name}}
   else{customers.push({id:nextCustId(),name,gender,source})}
   saveData();closeSheet();updateAll();toast(eid?'客户已更新':'客户已添加')
 }
@@ -863,4 +862,4 @@ function updateAll(){updateSum();updateHomeStats();updateTargets();renderList();
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 
-function saveData(){var d={rec:records,cus:customers,cc:customCats,sc:customSubCats,tg:targets};try{localStorage.setItem('j',JSON.stringify(d))}catch(e){}try{window.name=JSON.stringify(d)}catch(e){}}catch(e){window._d=window._d||{};window._d.rec=records;window._d.cus=customers;window._d.cc=customCats;window._d.sc=customSubCats;window._d.tg=targets}}</script></body></html>
+function saveData(){localStorage.setItem('j_acc',JSON.stringify(records));localStorage.setItem('j_cust',JSON.stringify(customers));localStorage.setItem('j_cats',JSON.stringify(customCats));localStorage.setItem('j_subcats',JSON.stringify(customSubCats));localStorage.setItem('j_tg',JSON.stringify(targets))}catch(e){window._d=window._d||{};window._d.rec=records;window._d.cus=customers;window._d.cc=customCats;window._d.sc=customSubCats;window._d.tg=targets}}</script></body></html>
