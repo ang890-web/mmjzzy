@@ -399,13 +399,13 @@ var OSS_AK='LTAI5t5uhGJ179DvXGt7RaVz'.replace(/./,function(c){return c});var sk_
 const OSS_DOMAIN='https://mmjzxz.oss-cn-shenzhen.aliyuncs.com',OSS_RES='/mmjzxz/data.json';
 async function ossSign(m,ct,d,r){var s2s=m+'\n\n'+(ct||'')+'\n'+d+'\n'+r;var k=await crypto.subtle.importKey('raw',new TextEncoder().encode(OSS_SK),{name:'HMAC',hash:'SHA-1'},false,['sign']);var sg=await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(s2s));return'OSS '+OSS_AK+':'+btoa(String.fromCharCode.apply(null,new Uint8Array(sg)))}
 async function ossRead(){try{var r=await fetch(OSS_DOMAIN+'/data.json');if(r.ok)return await r.json()}catch(e){}return null}
-async function ossWrite(d){try{var b=JSON.stringify(d),dt=new Date().toUTCString(),a=await ossSign('PUT','application/json',dt,OSS_RES);await fetch(OSS_DOMAIN+'/data.json',{method:'PUT',headers:{'Date':dt,'Content-Type':'application/json','Authorization':a},body:b})}catch(e){}}
+async function ossWrite(d){try{var b=JSON.stringify(d),dt=new Date().toUTCString(),a=await ossSign('PUT','application/json',dt,OSS_RES);var r=await fetch(OSS_DOMAIN+'/data.json',{method:'PUT',headers:{'Date':dt,'Content-Type':'application/json','Authorization':a},body:b});if(!r.ok)toast('⚠️ 云端保存失败('+r.status+')')}catch(e){toast('⚠️ 云端保存出错:'+e.message)}}
 
 const DEF_CATS=['黄金','白银','珍珠','水晶','玉石','其他'];
 const DEF_SUBCATS=['戒指','手镯','项链','手串','挂件'];
 let customCats=[],customSubCats=[];
 async function loadData(){
-  try{var d=await ossRead();if(d){records=d.records||[];customers=d.customers||[];customCats=d.customCats||[];customSubCats=d.customSubCats||[];targets=d.targets||{};return}}catch(e){}
+  try{var d=await ossRead();if(d&&d.records&&d.records.length>0){records=d.records;customers=d.customers||[];customCats=d.customCats||[];customSubCats=d.customSubCats||[];targets=d.targets||{};return}}catch(e){}
   try{const r=localStorage.getItem('j_acc');records=r?JSON.parse(r):[]}catch(e){records=[]}
   try{const c=localStorage.getItem('j_cust');customers=c?JSON.parse(c):[]}catch(e){customers=[]}
   try{const x=localStorage.getItem('j_cats');customCats=x?JSON.parse(x):[]}catch(e){customCats=[]}
@@ -442,7 +442,7 @@ function toggleCatInput(inputId,fieldId){
   const el=document.getElementById(inputId);el.classList.toggle('show');
   if(el.classList.contains('show')){document.getElementById(fieldId).value='';document.getElementById(fieldId).focus()}
 }
-function addNewItem(type){
+async function addNewItem(type){
   const isCat=type==='cat';
   const inputId=isCat?'catNewInput':'subNewInput';
   const list=isCat?customCats:customSubCats;
@@ -452,7 +452,7 @@ function addNewItem(type){
   const v=document.getElementById(inputId).value.trim();
   if(!v){toast('请输入'+label+'名称');return}
   if(defs.includes(v)||list.includes(v)){toast('该'+label+'已存在');return}
-  list.push(v);saveData();refillSel(selId,[...defs,...list],v);toggleCatInput(isCat?'catInlineAdd':'subInlineAdd',inputId);toast(`已添加${label}: ${v}`)
+  list.push(v);await saveData();refillSel(selId,[...defs,...list],v);toggleCatInput(isCat?'catInlineAdd':'subInlineAdd',inputId);toast(`已添加${label}: ${v}`)
 }
 function calcBal(){
   const s=[...records].sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));let b=0;
@@ -653,7 +653,7 @@ function openEditRec(id){
   refillSel('fieldSubcat',[...DEF_SUBCATS,...customSubCats],r.subcategory||'');
   if(r.image){_currentPhoto=r.image;document.getElementById('photoPreview').style.display='block';document.getElementById('photoImg').src=r.image;document.getElementById('photoPlaceholder').style.display='none'}else{_currentPhoto=null;document.getElementById('photoPreview').style.display='none';document.getElementById('photoPlaceholder').style.display='flex'}document.getElementById('catInlineAdd').classList.remove('show');document.getElementById('subInlineAdd').classList.remove('show');showSheet('sheetRecord')
 }
-function saveRecord(){
+async function saveRecord(){
   const date=document.getElementById('fieldDate').value,cid=document.getElementById('fieldCustomer').value;
   const cat=document.getElementById('fieldCategory').value,sub=document.getElementById('fieldSubcat').value;
   const unit=document.getElementById('fieldUnit').value,qty=document.getElementById('fieldQuantity').value;
@@ -668,7 +668,7 @@ function saveRecord(){
   else{records.push({id:idGen(),date,custId:cid||'',custName:cust?cust.name:'',category:cat,subcategory:sub,unit,quantity:qn,income:in2,expense:ex2,image:_currentPhoto||''})}
   saveData();closeSheet();updateAll();toast(eid?'记录已更新':'记录已保存')
 }
-function deleteRecord(){const id=document.getElementById('editId').value;if(!id)return;records=records.filter(r=>r.id!==id);saveData();closeSheet();updateAll();toast('记录已删除')}
+async function deleteRecord(){const id=document.getElementById('editId').value;if(!id)return;records=records.filter(r=>r.id!==id);await saveData();closeSheet();updateAll();toast('记录已删除')}
 function showDeleteConfirm(){document.getElementById('deleteConfirm').classList.add('show');document.getElementById('deleteBtn').style.display='none'}
 function hideDeleteConfirm(){document.getElementById('deleteConfirm').classList.remove('show');document.getElementById('deleteBtn').style.display='block'}
 function openAddCust(){
@@ -686,19 +686,19 @@ function openEditCust(id){
   document.getElementById('deleteCustArea').style.display='block';document.getElementById('deleteCustConfirm').classList.remove('show');document.getElementById('deleteCustBtn').style.display='block';showSheet('sheetCustomer')
 }
 function selectPill(el,group){document.querySelectorAll('#'+group+' .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active')}
-function saveCustomer(){
+async function saveCustomer(){
   const eid=document.getElementById('editCustId').value,name=document.getElementById('fieldCustName').value.trim();
   const ge=document.querySelector('#fieldGender .pill.active'),gender=ge?ge.dataset.val:'';
   const source=document.getElementById('fieldSource').value;
   if(!name){toast('请输入客户姓名');return}if(!gender){toast('请选择性别');return}
   if(eid){const idx=customers.findIndex(c=>c.id===eid);if(idx===-1){toast('客户不存在');return}const old=customers[idx];customers[idx]={...old,name,gender,source};for(let i=0;i<records.length;i++){if(records[i].custId===eid)records[i].custName=name}}
   else{customers.push({id:nextCustId(),name,gender,source})}
-  saveData();closeSheet();updateAll();toast(eid?'客户已更新':'客户已添加')
+  await saveData();closeSheet();updateAll();toast(eid?'客户已更新':'客户已添加')
 }
-function deleteCustomer(){
+async function deleteCustomer(){
   const id=document.getElementById('editCustId').value;if(!id)return;
   for(let i=0;i<records.length;i++){if(records[i].custId===id){records[i].custId='';records[i].custName=''}}
-  customers=customers.filter(c=>c.id!==id);saveData();closeSheet();updateAll();toast('客户已删除')
+  customers=customers.filter(c=>c.id!==id);await saveData();closeSheet();updateAll();toast('客户已删除')
 }
 function showCustDeleteConfirm(){document.getElementById('deleteCustConfirm').classList.add('show');document.getElementById('deleteCustBtn').style.display='none'}
 function hideCustDeleteConfirm(){document.getElementById('deleteCustConfirm').classList.remove('show');document.getElementById('deleteCustBtn').style.display='block'}
@@ -838,7 +838,7 @@ function importCSV(e){
       records.push({id:idGen(),date,custId:cid,custName:custN,category:cat,subcategory:sub,unit:unit,quantity:qty,income:inc,expense:exp,image:''});
       imported++
     }
-    saveData();updateAll();toast('导入完成: 成功 '+imported+' 条'+(skipped>0?'，跳过 '+skipped+' 条':''));
+    await saveData();updateAll();toast('导入完成: 成功 '+imported+' 条'+(skipped>0?'，跳过 '+skipped+' 条':''));
     document.getElementById('importInput').value=''
   };
   reader.readAsText(file)
@@ -870,9 +870,11 @@ function saveTarget(){
 
 
 function toggleCustQuickAdd(){var el=document.getElementById('custQuickAdd');el.classList.toggle('show');if(el.classList.contains('show')){document.getElementById('custQName').value='';document.getElementById('custQName').focus();document.querySelectorAll('#custQGender .pill').forEach(function(p){p.classList.remove('active')});document.getElementById('custQSource').value='老客户介绍'}}
-function saveQuickCust(){var n=document.getElementById('custQName').value.trim();if(!n){toast('请输入客户姓名');return}var ge=document.querySelector('#custQGender .pill.active'),g=ge?ge.dataset.val:'';var s=document.getElementById('custQSource').value,cid=nextCustId();customers.push({id:cid,name:n,gender:g,source:s});saveData();refillCustSelect();document.getElementById('fieldCustomer').value=cid;toggleCustQuickAdd();toast('客户已添加: '+n)}
+async function saveQuickCust(){var n=document.getElementById('custQName').value.trim();if(!n){toast('请输入客户姓名');return}var ge=document.querySelector('#custQGender .pill.active'),g=ge?ge.dataset.val:'';var s=document.getElementById('custQSource').value,cid=nextCustId();customers.push({id:cid,name:n,gender:g,source:s});await saveData();refillCustSelect();document.getElementById('fieldCustomer').value=cid;toggleCustQuickAdd();toast('客户已添加: '+n)}
 function updateAll(){updateSum();updateHomeStats();updateTargets();renderList();renderCustomers();if(currentTab==='stats')renderStats();if(currentTab==='targets')renderTargets()}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
 (async function(){await loadData();updateAll();refillCustSelect()})();
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+
+<div style="display:none">v2.0-cloud</div>
 </script></body></html>
