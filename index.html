@@ -283,7 +283,7 @@ button{cursor:pointer;border:none;background:none;tap-highlight-color:transparen
         <div class="hs-row" style="border-top:1px solid var(--border);padding-top:3px;margin-top:2px"><span style="letter-spacing:2px">净收入</span><span class="hs-balance" id="hsTBal">0.00</span></div>
       </div>
     </div>
-    <div class="search-section"><div class="search-modes" id="searchModes"><button class="smode active" data-mode="all" onclick="setSearchMode('all')">全部</button><button class="smode" data-mode="date" onclick="setSearchMode('date')">日期</button><button class="smode" data-mode="customer" onclick="setSearchMode('customer')">客户</button><button class="smode" data-mode="category" onclick="setSearchMode('category')">类别</button></div><div class="s-bar"><input class="si" id="searchInput" placeholder="搜索…" oninput="renderList()"><div class="date-range" id="dateSearchContainer" style="display:none"><input class="si" id="dateFrom" type="date" oninput="renderList()"><span style="color:var(--text2);font-size:12px;flex-shrink:0">至</span><input class="si" id="dateTo" type="date" oninput="renderList()"></div></div></div>
+    <div class="search-section"><div class="search-modes" id="searchModes"><button class="smode active" data-mode="all" onclick="setSearchMode('all')">全部</button><button class="smode" data-mode="date" onclick="setSearchMode('date')">日期</button><button class="smode" data-mode="customer" onclick="setSearchMode('customer')">客户</button><button class="smode" data-mode="category" onclick="setSearchMode('category')">类别</button></div><div class="s-bar"><input class="si" id="searchInput" placeholder="搜索…" oninput="clearTimeout(this._st);this._st=setTimeout(function(){renderList()},300)"><div class="date-range" id="dateSearchContainer" style="display:none"><input class="si" id="dateFrom" type="date" oninput="renderList()"><span style="color:var(--text2);font-size:12px;flex-shrink:0">至</span><input class="si" id="dateTo" type="date" oninput="renderList()"></div></div></div>
     <div id="recordList"></div>
   </div>
   <div id="pageCustomers" class="tab-content">
@@ -397,30 +397,16 @@ button{cursor:pointer;border:none;background:none;tap-highlight-color:transparen
 let records=[],customers=[],currentTab='list',statRange='today',_currentPhoto=null,searchMode='all',statsRange='all',listLimit=100;
 
 
-// GitHub云存储
-var gt1='ghp_vuX8HKdVhqU56F',gt2='ASCDeekK34afS1jg2k5l2H';var gt=gt1+gt2;
-var GO='ang890-web',GR='mmjzzy',GP='data.json';
-async function gitRead(){try{var r=await fetch('https://api.github.com/repos/'+GO+'/'+GR+'/contents/'+GP,{headers:{'Authorization':'Bearer '+gt}});if(r.ok){var j=await r.json();return JSON.parse(new TextDecoder().decode(new Uint8Array(atob(j.content).split('').map(function(c){return c.charCodeAt(0)})))}}else return null}catch(e){return null}}
-async function gitWrite(d){try{var r=await fetch('https://api.github.com/repos/'+GO+'/'+GR+'/contents/'+GP,{headers:{'Authorization':'Bearer '+gt}});if(!r.ok)return false;var j=await r.json();var b64=btoa(String.fromCharCode.apply(null,new Uint8Array(new TextEncoder().encode(JSON.stringify(d)))));var w=await fetch('https://api.github.com/repos/'+GO+'/'+GR+'/contents/'+GP,{method:'PUT',headers:{'Authorization':'Bearer '+gt,'Content-Type':'application/json'},body:JSON.stringify({message:'sync',content:b64,sha:j.sha})});return w.ok}catch(e){return false}}
-async function cloudLoad(){try{var d=await gitRead();if(d&&d.records&&d.records.length>0){records=d.records;customers=d.customers||[];customCats=d.customCats||[];customSubCats=d.customSubCats||[];targets=d.targets||{};return true}}catch(e){}return false}
-function cloudSave(){gitWrite({records,customers,customCats,customSubCats:customSubCats,targets}).then(function(ok){if(!ok)console.log('cloud save failed')})}
+
 
 const DEF_CATS=['黄金','白银','珍珠','水晶','玉石','其他'];
 const DEF_SUBCATS=['戒指','手镯','项链','手串','挂件'];
 let customCats=[],customSubCats=[];
-function loadData(){
-  try{const r=localStorage.getItem('j_acc');records=r?JSON.parse(r):[]}catch(e){records=[]}
-  try{const c=localStorage.getItem('j_cust');customers=c?JSON.parse(c):[]}catch(e){customers=[]}
-  try{const x=localStorage.getItem('j_cats');customCats=x?JSON.parse(x):[]}catch(e){customCats=[]}
-  try{const y=localStorage.getItem('j_subcats');customSubCats=y?JSON.parse(y):[]}catch(e){customSubCats=[]}
-  if(!Array.isArray(records))records=[];if(!Array.isArray(customers))customers=[];
-  if(!Array.isArray(customCats))customCats=[];if(!Array.isArray(customSubCats))customSubCats=[]
-}
-function saveData(){localStorage.setItem('j_acc',JSON.stringify(records));localStorage.setItem('j_cust',JSON.stringify(customers));localStorage.setItem('j_cats',JSON.stringify(customCats));localStorage.setItem('j_subcats',JSON.stringify(customSubCats));localStorage.setItem('j_tg',JSON.stringify(targets));cloudSave()}
+function loadData(){try{const r=localStorage.getItem('j_acc');records=r?JSON.parse(r):[]}catch(e){records=[]}try{const c=localStorage.getItem('j_cust');customers=c?JSON.parse(c):[]}catch(e){customers=[]}try{const x=localStorage.getItem('j_cats');customCats=x?JSON.parse(x):[]}catch(e){customCats=[]}try{const y=localStorage.getItem('j_subcats');customSubCats=y?JSON.parse(y):[]}catch(e){customSubCats=[]}if(!Array.isArray(records))records=[];if(!Array.isArray(customers))customers=[];if(!Array.isArray(customCats))customCats=[];if(!Array.isArray(customSubCats))customSubCats=[]}
 
 function dateToStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function fmtNum(n){return Number(n).toFixed(2)}
+function fmtNum(n){var v=Number(n);if(isNaN(v)||!isFinite(v))return'0.00';return v.toFixed(2)}
 function fmtDate(d){if(!d)return'';if(d.includes('-')){var p=d.split('-');return p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日'}if(d.includes('/')){var p=d.split('/');return p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日'}if(d.includes('年'))return d;return d}
 function idGen(){return Date.now()+'_'+Math.random().toString(36).slice(2,8)}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -449,7 +435,7 @@ function addNewItem(type){
   const label=isCat?'类别':'中类';
   const v=document.getElementById(inputId).value.trim();
   if(!v){toast('请输入'+label+'名称');return}
-  if(defs.includes(v)||list.includes(v)){toast('该'+label+'已存在');return}
+  var vt=v.trim();if(!vt){toast('请输入名称');return}var re=defs.some(function(x){return x.toLowerCase()===vt.toLowerCase()})||list.some(function(x){return x.toLowerCase()===vt.toLowerCase()});if(re){toast('该'+label+'已存在');return}
   list.push(v);saveData();refillSel(selId,[...defs,...list],v);toggleCatInput(isCat?'catInlineAdd':'subInlineAdd',inputId);toast(`已添加${label}: ${v}`)
 }
 function calcBal(){
@@ -793,7 +779,7 @@ function saveTargetFromPage(){
 function setStatsRange(r){
   statsRange=r;
   document.querySelectorAll('#statsModes .smode').forEach(function(t){t.classList.toggle('active',t.dataset.sr===r)});
-  if(r==='custom'){document.getElementById('statsDateRange').style.display='flex'}else{document.getElementById('statsDateRange').style.display='none'}renderStats()
+  if(r==='custom'){document.getElementById('statsDateRange').style.display='flex';document.getElementById('statsDateFrom').value='';document.getElementById('statsDateTo').value=''}else{document.getElementById('statsDateRange').style.display='none'}renderStats()
 }
 
 function parseCSVLine(l){
@@ -867,10 +853,10 @@ function saveTarget(){
 }
 
 
-function toggleCustQuickAdd(){var el=document.getElementById('custQuickAdd');el.classList.toggle('show');if(el.classList.contains('show')){document.getElementById('custQName').value='';document.getElementById('custQName').focus();document.querySelectorAll('#custQGender .pill').forEach(function(p){p.classList.remove('active')});document.getElementById('custQSource').value='老客户介绍'}}
+function toggleCustQuickAdd(){var el=document.getElementById('custQuickAdd');el.classList.toggle('show');if(el.classList.contains('show')){document.getElementById('custQName').value='';document.getElementById('custQName').focus();document.querySelectorAll('#custQGender .pill').forEach(function(p){p.classList.remove('active')});document.querySelector('#custQGender .pill[data-val="男"]').classList.add('active');document.getElementById('custQSource').value='老客户介绍'}}
 function saveQuickCust(){var n=document.getElementById('custQName').value.trim();if(!n){toast('请输入客户姓名');return}var ge=document.querySelector('#custQGender .pill.active'),g=ge?ge.dataset.val:'';var s=document.getElementById('custQSource').value,cid=nextCustId();customers.push({id:cid,name:n,gender:g,source:s});saveData();refillCustSelect();document.getElementById('fieldCustomer').value=cid;toggleCustQuickAdd();toast('客户已添加: '+n)}
 function updateAll(){updateSum();updateHomeStats();updateTargets();renderList();renderCustomers();if(currentTab==='stats')renderStats();if(currentTab==='targets')renderTargets()}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
-loadData();loadTargets();updateAll();refillCustSelect();(async function(){var ok=await cloudLoad();if(ok){updateAll();refillCustSelect();}})();
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
-</script></body></html>
+
+function saveData(){localStorage.setItem('j_acc',JSON.stringify(records));localStorage.setItem('j_cust',JSON.stringify(customers));localStorage.setItem('j_cats',JSON.stringify(customCats));localStorage.setItem('j_subcats',JSON.stringify(customSubCats));localStorage.setItem('j_tg',JSON.stringify(targets))}</script></body></html>
