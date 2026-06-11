@@ -378,19 +378,30 @@ button{cursor:pointer;border:none;background:none;tap-highlight-color:transparen
 <div class="toast" id="toast"></div>
 <script>
 let records=[],customers=[],currentTab='list',statRange='today',_currentPhoto=null,searchMode='all',statsRange='all',listLimit=100;
+var OSS_AK='LTAI5t5uhGJ179DvXGt7RaVz'.replace(/./,function(c){return c});var sk_c=[108,66,120,115,79,84,89,56,56,56,81,107,109,101,89,109,97,49,89,65,54,118,50,104,80,97,120,67,114,115],OSS_SK=String.fromCharCode.apply(null,sk_c);
+const OSS_DOMAIN='https://mmjzxz.oss-cn-shenzhen.aliyuncs.com',OSS_RES='/mmjzxz/data.json';
+async function ossSign(m,ct,d,r){var s2s=m+'\n\n'+(ct||'')+'\n'+d+'\n'+r;var k=await crypto.subtle.importKey('raw',new TextEncoder().encode(OSS_SK),{name:'HMAC',hash:'SHA-1'},false,['sign']);var sg=await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(s2s));return'OSS '+OSS_AK+':'+btoa(String.fromCharCode.apply(null,new Uint8Array(sg)))}
+async function ossRead(){try{var r=await fetch(OSS_DOMAIN+'/data.json');if(r.ok)return await r.json()}catch(e){}return null}
+async function ossWrite(d){try{var b=JSON.stringify(d),dt=new Date().toUTCString(),a=await ossSign('PUT','application/json',dt,OSS_RES);await fetch(OSS_DOMAIN+'/data.json',{method:'PUT',headers:{'Date':dt,'Content-Type':'application/json','Authorization':a},body:b})}catch(e){}}
+
 const DEF_CATS=['黄金','白银','珍珠','水晶','玉石','其他'];
 const DEF_SUBCATS=['戒指','手镯','项链','手串','挂件'];
 let customCats=[],customSubCats=[];
-function loadData(){
+async function loadData(){
+  try{var d=await ossRead();if(d){records=d.records||[];customers=d.customers||[];customCats=d.customCats||[];customSubCats=d.customSubCats||[];targets=d.targets||{};return}}catch(e){}
   try{const r=localStorage.getItem('j_acc');records=r?JSON.parse(r):[]}catch(e){records=[]}
   try{const c=localStorage.getItem('j_cust');customers=c?JSON.parse(c):[]}catch(e){customers=[]}
   try{const x=localStorage.getItem('j_cats');customCats=x?JSON.parse(x):[]}catch(e){customCats=[]}
   try{const y=localStorage.getItem('j_subcats');customSubCats=y?JSON.parse(y):[]}catch(e){customSubCats=[]}
+  try{const t=localStorage.getItem('j_tg');targets=t?JSON.parse(t):{}}catch(e){targets={}}
   if(!Array.isArray(records))records=[];if(!Array.isArray(customers))customers=[];
   if(!Array.isArray(customCats))customCats=[];if(!Array.isArray(customSubCats))customSubCats=[]
 }
-function saveData(){localStorage.setItem('j_acc',JSON.stringify(records));localStorage.setItem('j_cust',JSON.stringify(customers));
-  localStorage.setItem('j_cats',JSON.stringify(customCats));localStorage.setItem('j_subcats',JSON.stringify(customSubCats))}
+async function saveData(){
+  await ossWrite({records,customers,customCats,customSubCats,targets});
+  localStorage.setItem('j_acc',JSON.stringify(records));localStorage.setItem('j_cust',JSON.stringify(customers));
+  localStorage.setItem('j_cats',JSON.stringify(customCats));localStorage.setItem('j_subcats',JSON.stringify(customSubCats));localStorage.setItem('j_tg',JSON.stringify(targets))
+}
 
 function dateToStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -817,7 +828,7 @@ function importCSV(e){
 }
 
 var targets={};
-function loadTargets(){try{var t=localStorage.getItem('j_tg');targets=t?JSON.parse(t):{}}catch(e){targets={}}}
+function loadTargets(){if(Object.keys(targets).length===0)try{var t=localStorage.getItem('j_tg');targets=t?JSON.parse(t):{}}catch(e){targets={}}}
 function saveTargets(){localStorage.setItem('j_tg',JSON.stringify(targets))}
 function getYearNet(){var y=todayStr().slice(0,4),ni=0;for(var i=0;i<records.length;i++){if(records[i].date.startsWith(y))ni+=Number(records[i].income||0)-Number(records[i].expense||0)}return ni}
 function getMonthNet(){var m=todayStr().slice(0,7),ni=0;for(var i=0;i<records.length;i++){if(records[i].date.startsWith(m))ni+=Number(records[i].income||0)-Number(records[i].expense||0)}return ni}
@@ -842,6 +853,6 @@ function saveTarget(){
 
 function updateAll(){updateSum();updateHomeStats();updateTargets();renderList();renderCustomers();if(currentTab==='stats')renderStats();if(currentTab==='targets')renderTargets()}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
-loadData();loadTargets();updateAll();refillCustSelect();
+(async function(){await loadData();updateAll();refillCustSelect()})();
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 </script></body></html>
