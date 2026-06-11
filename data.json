@@ -1,1 +1,1 @@
-{"records":[],"customers":[{"id":"KH0001","name":"111","gender":"男","source":"老客户介绍"}],"customCats":[],"customSubCats":[],"targets":{}}
+{"records":[{"id":"1781156836161_7m79yw","date":"2026-06-11","custId":"KH0001","custName":"111","category":"黄金","subcategory":"戒指","unit":"克","quantity":111,"income":1999,"expense":888,"image":"","_balance":1111}],"customers":[{"id":"KH0001","name":"111","gender":"男","source":"老客户介绍"}],"customCats":[],"customSubCats":[],"targets":{}}
