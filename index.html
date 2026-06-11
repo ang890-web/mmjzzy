@@ -402,7 +402,7 @@ var gt1='ghp_vuX8HKdVhqU56F',gt2='ASCDeekK34afS1jg2k5l2H';var gt=gt1+gt2;
 var GO='ang890-web',GR='mmjzzy',GP='data.json';
 async function gitRead(){try{var r=await fetch('https://api.github.com/repos/'+GO+'/'+GR+'/contents/'+GP,{headers:{'Authorization':'Bearer '+gt}});if(r.ok){var j=await r.json();return JSON.parse(new TextDecoder().decode(new Uint8Array(atob(j.content).split('').map(function(c){return c.charCodeAt(0)})))}}else return null}catch(e){return null}}
 async function gitWrite(d){try{var r=await fetch('https://api.github.com/repos/'+GO+'/'+GR+'/contents/'+GP,{headers:{'Authorization':'Bearer '+gt}});if(!r.ok)return false;var j=await r.json();var b64=btoa(String.fromCharCode.apply(null,new Uint8Array(new TextEncoder().encode(JSON.stringify(d)))));var w=await fetch('https://api.github.com/repos/'+GO+'/'+GR+'/contents/'+GP,{method:'PUT',headers:{'Authorization':'Bearer '+gt,'Content-Type':'application/json'},body:JSON.stringify({message:'sync',content:b64,sha:j.sha})});return w.ok}catch(e){return false}}
-async function cloudLoad(){try{var d=await gitRead();if(d&&d.records&&d.records.length>0){records=d.records;customers=d.customers||[];customCats=d.customCats||[];customSubCats=d.subCats||[];targets=d.targets||{};return true}}catch(e){}return false}
+async function cloudLoad(){try{var d=await gitRead();if(d&&d.records&&d.records.length>0){records=d.records;customers=d.customers||[];customCats=d.customCats||[];customSubCats=d.customSubCats||[];targets=d.targets||{};return true}}catch(e){}return false}
 function cloudSave(){gitWrite({records,customers,customCats,customSubCats:customSubCats,targets}).then(function(ok){if(!ok)console.log('cloud save failed')})}
 
 const DEF_CATS=['黄金','白银','珍珠','水晶','玉石','其他'];
