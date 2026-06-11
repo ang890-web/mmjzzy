@@ -307,7 +307,24 @@ button{cursor:pointer;border:none;background:none;tap-highlight-color:transparen
   <div class="form">
     <input type="hidden" id="editId" value="">
     <div class="fg"><label class="fl">日期</label><input class="fi" type="date" id="fieldDate"></div>
-    <div class="fg"><label class="fl">客户</label><select class="fs" id="fieldCustomer"><option value="">选择客户…</option></select></div>
+    <div class="fg"><label class="fl">客户</label>
+<div class="cat-row"><select class="fs" id="fieldCustomer"></select>
+<button class="cat-add-btn" onclick="toggleCustQuickAdd()">+</button></div>
+<div class="cat-inline-add" id="custQuickAdd">
+<input class="fi" id="custQName" placeholder="客户姓名" maxlength="20" style="margin-bottom:6px">
+<div style="display:flex;gap:8px;margin-bottom:6px">
+<div class="pill-group" id="custQGender" style="display:flex;flex:1">
+<div class="pill" data-val="男" onclick="selectPill(this,'custQGender')" style="max-width:80px">👨 男</div>
+<div class="pill" data-val="女" onclick="selectPill(this,'custQGender')" style="max-width:80px">👩 女</div></div>
+<select class="fs" id="custQSource" style="flex:1">
+<option value="老客户介绍">💬 老客户</option>
+<option value="小红书">📕 小红书</option>
+<option value="线下">🏪 线下</option>
+<option value="抖音">🎵 抖音</option>
+<option value="其他">📌 其他</option></select></div>
+<div style="display:flex;gap:8px">
+<button class="btn btn-pri" onclick="saveQuickCust()" style="padding:8px 14px;flex:0;font-size:13px">➕ 添加</button>
+<button class="btn btn-sec" onclick="toggleCustQuickAdd()" style="padding:8px 14px;flex:0;font-size:13px">取消</button></div></div></div>
     <div class="fg"><label class="fl">购买类别</label>
       <div class="cat-row"><select class="fs" id="fieldCategory"></select>
         <button class="cat-add-btn" onclick="toggleCatInput('catInlineAdd','catNewInput')">+</button></div>
@@ -851,6 +868,9 @@ function saveTarget(){
   var mo=todayStr().slice(0,7);targets[mo]=v;saveTargets();cancelTargetEdit();updateTargets();toast('本月目标已设置为 ¥'+fmtNum(v))
 }
 
+
+function toggleCustQuickAdd(){var el=document.getElementById('custQuickAdd');el.classList.toggle('show');if(el.classList.contains('show')){document.getElementById('custQName').value='';document.getElementById('custQName').focus();document.querySelectorAll('#custQGender .pill').forEach(function(p){p.classList.remove('active')});document.getElementById('custQSource').value='老客户介绍'}}
+function saveQuickCust(){var n=document.getElementById('custQName').value.trim();if(!n){toast('请输入客户姓名');return}var ge=document.querySelector('#custQGender .pill.active'),g=ge?ge.dataset.val:'';var s=document.getElementById('custQSource').value,cid=nextCustId();customers.push({id:cid,name:n,gender:g,source:s});saveData();refillCustSelect();document.getElementById('fieldCustomer').value=cid;toggleCustQuickAdd();toast('客户已添加: '+n)}
 function updateAll(){updateSum();updateHomeStats();updateTargets();renderList();renderCustomers();if(currentTab==='stats')renderStats();if(currentTab==='targets')renderTargets()}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
 (async function(){await loadData();updateAll();refillCustSelect()})();
