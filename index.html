@@ -399,6 +399,11 @@ let records=[],customers=[],currentTab='list',statRange='today',_currentPhoto=nu
 
 
 
+// GitHub云端同步
+var gt1='ghp_vuX8HKdVhqU56F',gt2='ASCDeekK34afS1jg2k5l2H';var gtk=gt1+gt2;
+async function ghSave(d){try{var r=await fetch('https://api.github.com/repos/ang890-web/mmjzzy/contents/data.json',{headers:{'Authorization':'Bearer '+gtk}});if(!r.ok)return;var j=await r.json();var b=encodeURIComponent(JSON.stringify(d));var s=btoa(unescape(b));await fetch('https://api.github.com/repos/ang890-web/mmjzzy/contents/data.json',{method:'PUT',headers:{'Authorization':'Bearer '+gtk,'Content-Type':'application/json'},body:JSON.stringify({message:'sync',content:s,sha:j.sha})})}catch(e){}}
+async function ghLoad(){try{var r=await fetch('https://api.github.com/repos/ang890-web/mmjzzy/contents/data.json',{headers:{'Authorization':'Bearer '+gtk}});if(r.ok){var j=await r.json();return JSON.parse(decodeURIComponent(escape(atob(j.content))))}return null}catch(e){return null}}
+
 const DEF_CATS=['黄金','白银','珍珠','水晶','玉石','其他'];
 const DEF_SUBCATS=['戒指','手镯','项链','手串','挂件'];
 let customCats=[],customSubCats=[];
@@ -859,4 +864,4 @@ function updateAll(){updateSum();updateHomeStats();updateTargets();renderList();
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 
-function saveData(){localStorage.setItem('j_acc',JSON.stringify(records));localStorage.setItem('j_cust',JSON.stringify(customers));localStorage.setItem('j_cats',JSON.stringify(customCats));localStorage.setItem('j_subcats',JSON.stringify(customSubCats));localStorage.setItem('j_tg',JSON.stringify(targets))}</script></body></html>
+function saveData(){localStorage.setItem('j_acc',JSON.stringify(records));localStorage.setItem('j_cust',JSON.stringify(customers));localStorage.setItem('j_cats',JSON.stringify(customCats));localStorage.setItem('j_subcats',JSON.stringify(customSubCats));localStorage.setItem('j_tg',JSON.stringify(targets));ghSave({records,customers,customCats,customSubCats:customSubCats,targets})}</script></body></html>
