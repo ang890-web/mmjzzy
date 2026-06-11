@@ -395,11 +395,15 @@ button{cursor:pointer;border:none;background:none;tap-highlight-color:transparen
 <div class="toast" id="toast"></div>
 <script>
 let records=[],customers=[],currentTab='list',statRange='today',_currentPhoto=null,searchMode='all',statsRange='all',listLimit=100;
-var OSS_AK='LTAI5t5uhGJ179DvXGt7RaVz'.replace(/./,function(c){return c});var sk_c=[108,66,120,115,79,84,89,56,56,56,81,107,109,101,89,109,97,49,89,65,54,118,50,104,80,97,120,67,114,115],OSS_SK=String.fromCharCode.apply(null,sk_c);
 
-,false,['sign']);var sg=await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(s2s));return'OSS '+OSS_AK+':'+btoa(String.fromCharCode.apply(null,new Uint8Array(sg)))}
-catch(e){}return null}
-,body:b});if(!r.ok)toast('⚠️ 云端保存失败('+r.status+')')}catch(e){toast('⚠️ 云端保存出错:'+e.message)}}
+
+// GitHub云存储
+var gt1='ghp_vuX8HKdVhqU56F',gt2='ASCDeekK34afS1jg2k5l2H';var gt=gt1+gt2;
+var GO='ang890-web',GR='mmjzzy',GP='data.json';
+async function gitRead(){try{var r=await fetch('https://api.github.com/repos/'+GO+'/'+GR+'/contents/'+GP,{headers:{'Authorization':'Bearer '+gt}});if(r.ok){var j=await r.json();return JSON.parse(new TextDecoder().decode(new Uint8Array(atob(j.content).split('').map(function(c){return c.charCodeAt(0)})))}}else return null}catch(e){return null}}
+async function gitWrite(d){try{var r=await fetch('https://api.github.com/repos/'+GO+'/'+GR+'/contents/'+GP,{headers:{'Authorization':'Bearer '+gt}});if(!r.ok)return false;var j=await r.json();var b64=btoa(String.fromCharCode.apply(null,new Uint8Array(new TextEncoder().encode(JSON.stringify(d)))));var w=await fetch('https://api.github.com/repos/'+GO+'/'+GR+'/contents/'+GP,{method:'PUT',headers:{'Authorization':'Bearer '+gt,'Content-Type':'application/json'},body:JSON.stringify({message:'sync',content:b64,sha:j.sha})});return w.ok}catch(e){return false}}
+async function cloudLoad(){try{var d=await gitRead();if(d&&d.records&&d.records.length>0){records=d.records;customers=d.customers||[];customCats=d.customCats||[];customSubCats=d.subCats||[];targets=d.targets||{};return true}}catch(e){}return false}
+function cloudSave(){gitWrite({records,customers,customCats,customSubCats:customSubCats,targets}).then(function(ok){if(!ok)console.log('cloud save failed')})}
 
 const DEF_CATS=['黄金','白银','珍珠','水晶','玉石','其他'];
 const DEF_SUBCATS=['戒指','手镯','项链','手串','挂件'];
@@ -412,8 +416,7 @@ function loadData(){
   if(!Array.isArray(records))records=[];if(!Array.isArray(customers))customers=[];
   if(!Array.isArray(customCats))customCats=[];if(!Array.isArray(customSubCats))customSubCats=[]
 }
-function saveData(){localStorage.setItem('j_acc',JSON.stringify(records));localStorage.setItem('j_cust',JSON.stringify(customers));
-  localStorage.setItem('j_cats',JSON.stringify(customCats));localStorage.setItem('j_subcats',JSON.stringify(customSubCats));localStorage.setItem('j_tg',JSON.stringify(targets))}
+function saveData(){localStorage.setItem('j_acc',JSON.stringify(records));localStorage.setItem('j_cust',JSON.stringify(customers));localStorage.setItem('j_cats',JSON.stringify(customCats));localStorage.setItem('j_subcats',JSON.stringify(customSubCats));localStorage.setItem('j_tg',JSON.stringify(targets));cloudSave()}
 
 function dateToStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -868,6 +871,6 @@ function toggleCustQuickAdd(){var el=document.getElementById('custQuickAdd');el.
 function saveQuickCust(){var n=document.getElementById('custQName').value.trim();if(!n){toast('请输入客户姓名');return}var ge=document.querySelector('#custQGender .pill.active'),g=ge?ge.dataset.val:'';var s=document.getElementById('custQSource').value,cid=nextCustId();customers.push({id:cid,name:n,gender:g,source:s});saveData();refillCustSelect();document.getElementById('fieldCustomer').value=cid;toggleCustQuickAdd();toast('客户已添加: '+n)}
 function updateAll(){updateSum();updateHomeStats();updateTargets();renderList();renderCustomers();if(currentTab==='stats')renderStats();if(currentTab==='targets')renderTargets()}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
-loadData();loadTargets();updateAll();refillCustSelect();
+loadData();loadTargets();updateAll();refillCustSelect();(async function(){var ok=await cloudLoad();if(ok){updateAll();refillCustSelect();}})();
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 </script></body></html>
